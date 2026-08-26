@@ -12,7 +12,7 @@
     </div>
 
     <el-tabs v-model="activeTab" class="merge-tabs">
-      <el-tab-pane label="AI 反馈生成" name="generate"><FeedbackGenerate embedded /></el-tab-pane>
+      <el-tab-pane label="反馈生成" name="generate"><FeedbackGenerate embedded /></el-tab-pane>
       <el-tab-pane label="反馈记录" name="records"><FeedbackRecords embedded /></el-tab-pane>
       <el-tab-pane label="反馈风格" name="style"><StyleTagManage embedded /></el-tab-pane>
       <el-tab-pane label="行为标签" name="tags"><BehaviorTagManage embedded /></el-tab-pane>

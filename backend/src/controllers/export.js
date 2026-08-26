@@ -200,7 +200,7 @@ export async function exportStudentPdf(req, res, next) {
               },
             }
           : { text: '暂无成绩记录' },
-        { text: '二、AI 学情反馈', bold: true, margin: [0, 12, 0, 4] },
+        { text: '二、学情反馈', bold: true, margin: [0, 12, 0, 4] },
         fb
           ? [
               { text: '【简短微信版】', bold: true },
@@ -210,7 +210,7 @@ export async function exportStudentPdf(req, res, next) {
               { text: `待改进：${fb.content_full.problems}`, margin: [0, 2, 0, 4] },
               { text: `建议：${fb.content_full.suggestions}`, margin: [0, 2, 0, 4] },
             ]
-          : { text: '暂无 AI 反馈记录' },
+          : { text: '暂无反馈记录' },
       ],
     };
 

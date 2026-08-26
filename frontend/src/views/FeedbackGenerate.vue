@@ -4,8 +4,8 @@
       <div class="page-header-left">
         <div class="page-header-icon"><el-icon><MagicStick /></el-icon></div>
         <div>
-          <div class="page-header-tag">AI 智能</div>
-          <div class="page-header-title">AI 反馈生成</div>
+          <div class="page-header-tag">智能</div>
+          <div class="page-header-title">反馈生成</div>
           <div class="page-header-desc">基于学情数据，一键生成个性化家校反馈</div>
         </div>
       </div>
@@ -83,7 +83,7 @@
               <el-option v-for="t in commonStore.styleTags" :key="t.id" :label="t.tag_name" :value="t.tag_name" />
             </el-select>
           </el-form-item>
-          <el-form-item label="快捷关注点（点击选择，AI 将重点反馈）">
+          <el-form-item label="快捷关注点（点击选择，将重点反馈）">
             <div class="focus-chips">
               <span
                 v-for="p in focusPresets"
@@ -98,7 +98,7 @@
             <el-input v-model="form.teacher_notes" type="textarea" :rows="3" maxlength="200" show-word-limit placeholder="可选，将作为最高优先级纳入反馈" />
           </el-form-item>
           <el-button type="primary" size="large" class="gen-btn" :loading="generating" :icon="MagicStick" @click="onGenerate">
-            {{ generating ? 'AI 生成中…' : '生成反馈' }}
+            {{ generating ? '生成中…' : '生成反馈' }}
           </el-button>
         </el-form>
       </div>
@@ -109,7 +109,7 @@
 
         <div v-if="generating" class="gen-loading">
           <el-skeleton :rows="6" animated />
-          <p class="gen-loading-text">AI 正在分析学情数据，请稍候…</p>
+          <p class="gen-loading-text">正在分析学情数据，请稍候…</p>
         </div>
 
         <el-empty v-else-if="!result" description="填写左侧配置后点击「生成反馈」" :image-size="90" />
@@ -151,7 +151,7 @@ import { useRoute } from 'vue-router';
 import { MagicStick, CopyDocument, Download, Star } from '@element-plus/icons-vue';
 import { useStudentStore } from '../stores/student';
 import { useCommonStore } from '../stores/common';
-import request from '../utils/request';
+import request, { API_BASE } from '../utils/request';
 import { ElMessage } from 'element-plus';
 import MiniChart from '../components/MiniChart.vue';
 
@@ -259,7 +259,9 @@ function copyShort() {
 function exportPdf() {
   const token = localStorage.getItem('token') || '';
   const p = new URLSearchParams({ student_id: form.student_id, token });
-  window.open(`/api/export/student-pdf?${p.toString()}`, '_blank');
+  // 生产环境必须用完整后端地址, 避免 Vercel rewrite 导致跳到首页
+  const url = `${API_BASE}/export/student-pdf?${p.toString()}`;
+  window.open(url, '_blank');
 }
 </script>
 

@@ -53,4 +53,5 @@ request.interceptors.response.use(
   }
 );
 
+export { API_BASE };
 export default request;
