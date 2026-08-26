@@ -262,7 +262,7 @@ export async function getStudentCard(req, res, next) {
     if (!student_id) return resp.badRequest(res, 'student_id 必填');
     const { data: stu } = await supabase
       .from('student')
-      .select('id, name, avatar_url, class_id, class:class_id(name)')
+      .select('id, name, class_id, class:class_id(class_name)')
       .eq('id', student_id)
       .eq('teacher_id', req.user.id)
       .is('deleted_at', null)
@@ -374,7 +374,7 @@ export async function getStudentCard(req, res, next) {
     return success(res, {
       student_id: stu.id,
       name: stu.name,
-      class_name: stu.class?.name || '未分班',
+      class_name: stu.class?.class_name || '未分班',
       recent_score,
       prev_score,
       score_change,
