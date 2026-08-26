@@ -1,0 +1,40 @@
+# Render.com 部署配置 (免费版)
+# 在 Render 新建 Blueprint, 连 GitHub 仓库, 选择此文件即可自动部署
+services:
+  - type: web
+    name: teacher-backend
+    runtime: node
+    plan: free
+    region: singapore   # 离国内近, 访问更快
+    branch: main
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        sync: false
+      - key: AI_PROVIDER
+        sync: false
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_API_BASE
+        sync: false
+      - key: AI_MODEL
+        sync: false
+      - key: AI_TIMEOUT
+        sync: false
+      - key: INIT_ADMIN
+        sync: false
+      - key: INIT_ADMIN_PASSWORD
+        sync: false
