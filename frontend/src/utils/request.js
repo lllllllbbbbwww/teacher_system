@@ -2,8 +2,11 @@ import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import router from '../router';
 
-// 生产环境通过 VITE_API_BASE 指定后端地址; 不配置时走相对路径 /api (由平台代理或同源)
-const API_BASE = import.meta.env.VITE_API_BASE || '/api';
+// 后端 API 地址:
+// - 生产环境: 使用环境变量 VITE_API_BASE, 未设置时回退到已部署的后端地址
+// - 本地开发: 走 /api (由 vite 代理到 localhost:3000)
+const PROD_API = 'https://teacher-backend01.onrender.com';
+const API_BASE = import.meta.env.PROD ? (import.meta.env.VITE_API_BASE || PROD_API) : '/api';
 
 const request = axios.create({
   baseURL: API_BASE,
