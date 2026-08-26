@@ -213,7 +213,10 @@ export async function generateFeedback(req, res, next) {
       }
       aiFailed = true;
     }
-    const fb = parsed || fallbackFeedback(student.name, result);
+    // parseLLMJson 返回的字段是 short_version/full_version, 统一映射为入库字段
+    const fb = parsed
+      ? { content_short: parsed.short_version, content_full: parsed.full_version }
+      : fallbackFeedback(student.name, result);
 
     // 入库 (含数据快照)
     const snapshot = {
@@ -262,12 +265,22 @@ export async function getStudentCard(req, res, next) {
     if (!student_id) return resp.badRequest(res, 'student_id 必填');
     const { data: stu } = await supabase
       .from('student')
-      .select('id, name, class_id, class:class_id(class_name)')
+      .select('id, name, class_id')
       .eq('id', student_id)
       .eq('teacher_id', req.user.id)
       .is('deleted_at', null)
       .maybeSingle();
     if (!stu) throw new Forbidden('学生不存在或不属于当前教师');
+    // 班级名单独查询 (不依赖外键关联, 避免嵌入查询报错)
+    let class_name = '未分班';
+    if (stu.class_id) {
+      const { data: cls } = await supabase
+        .from('class')
+        .select('class_name')
+        .eq('id', stu.class_id)
+        .maybeSingle();
+      if (cls) class_name = cls.class_name;
+    }
 
     // 最近两次考试及分数
     const { data: exams } = await supabase
@@ -332,10 +345,20 @@ export async function getStudentCard(req, res, next) {
       const bIds = behRows.map((b) => b.id);
       const { data: rels } = await supabase
         .from('behavior_tag_rel')
-        .select('tag:tag_id(tag_type)')
+        .select('tag_id')
         .in('behavior_id', bIds);
-      const pos = (rels || []).filter((r) => r.tag?.tag_type === 'positive').length;
-      const imp = (rels || []).filter((r) => r.tag?.tag_type === 'improve').length;
+      const tagIds = [...new Set((rels || []).map((r) => r.tag_id))];
+      let pos = 0;
+      let imp = 0;
+      if (tagIds.length) {
+        const { data: tags } = await supabase
+          .from('behavior_tag')
+          .select('tag_type')
+          .in('id', tagIds);
+        const tt = tags || [];
+        pos = tt.filter((t) => t.tag_type === 'positive').length;
+        imp = tt.filter((t) => t.tag_type === 'improve').length;
+      }
       if (pos >= 3) performance_score = 5;
       else if (pos === 2) performance_score = 4;
       else if (pos === 1) performance_score = 3;
@@ -374,7 +397,7 @@ export async function getStudentCard(req, res, next) {
     return success(res, {
       student_id: stu.id,
       name: stu.name,
-      class_name: stu.class?.class_name || '未分班',
+      class_name,
       recent_score,
       prev_score,
       score_change,

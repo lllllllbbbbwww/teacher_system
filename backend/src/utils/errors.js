@@ -8,9 +8,9 @@ export class AppError extends Error {
   }
 }
 
-// 常用构造器
-export const BadRequest = (msg) => new AppError(400, msg, 400);
-export const Unauthorized = (msg) => new AppError(401, msg, 401);
-export const Forbidden = (msg) => new AppError(403, msg, 403);
-export const NotFound = (msg) => new AppError(404, msg, 404);
-export const Conflict = (msg) => new AppError(409, msg, 409);
+// 常用构造器 (普通函数声明: 兼容 new Xxx(...) 与 Xxx(...) 两种调用)
+export function BadRequest(msg) { return new AppError(400, msg, 400); }
+export function Unauthorized(msg) { return new AppError(401, msg, 401); }
+export function Forbidden(msg) { return new AppError(403, msg, 403); }
+export function NotFound(msg) { return new AppError(404, msg, 404); }
+export function Conflict(msg) { return new AppError(409, msg, 409); }

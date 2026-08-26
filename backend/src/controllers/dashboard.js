@@ -159,6 +159,15 @@ export async function dashboardSummary(req, res, next) {
       }
     }
 
+    // 班级名称映射 (单独查询 class 表, 避免嵌入关联依赖外键)
+    const { data: clsRows } = await supabase
+      .from('class')
+      .select('id, class_name')
+      .eq('teacher_id', teacherId)
+      .is('deleted_at', null);
+    const classMap = {};
+    for (const c of clsRows || []) classMap[c.id] = c.class_name;
+
     // 学员成绩进度看板：每生最近两场考试对比
     let student_progress = [];
     const { data: lastExams } = await supabase
@@ -180,7 +189,7 @@ export async function dashboardSummary(req, res, next) {
       }
       const { data: students } = await supabase
         .from('student')
-        .select('id, name, class_id, class:class_id(name)')
+        .select('id, name, class_id')
         .eq('teacher_id', teacherId)
         .is('deleted_at', null);
       const cur = lastExams[0].id;
@@ -202,7 +211,7 @@ export async function dashboardSummary(req, res, next) {
           student_id: st.id,
           name: st.name,
           class_id: st.class_id,
-          class_name: st.class?.name || '未分班',
+          class_name: classMap[st.class_id] || '未分班',
           exam_name: lastExams[0].exam_name,
           cur_score: curSc,
           prev_score: prevSc,
@@ -275,7 +284,7 @@ export async function dashboardSummary(req, res, next) {
     const attRiskList = Object.entries(attRisk).sort((a, b) => b[1] - a[1]);
     const { data: allStus } = await supabase
       .from('student')
-      .select('id, name, class_id, class:class_id(name)')
+      .select('id, name, class_id')
       .eq('teacher_id', teacherId)
       .is('deleted_at', null);
     const stuMap = {};
@@ -316,7 +325,7 @@ export async function dashboardSummary(req, res, next) {
           type: 'attendance',
           student_id: sid,
           name: st.name,
-          class_name: st.class?.name || '未分班',
+          class_name: classMap[st.class_id] || '未分班',
           title: `${st.name} 出勤异常`,
           desc: `近7天迟到/旷课 ${cnt} 次`,
         });

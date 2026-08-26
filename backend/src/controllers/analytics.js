@@ -10,12 +10,22 @@ export async function examOverview(req, res, next) {
 
     const { data: exam } = await supabase
       .from('exam')
-      .select('id, exam_name, subject, total_score, exam_time, class_id, class:class_id(name)')
+      .select('id, exam_name, subject, total_score, exam_time, class_id')
       .eq('id', exam_id)
       .eq('teacher_id', req.user.id)
       .is('deleted_at', null)
       .maybeSingle();
     if (!exam) throw new NotFound('考试不存在');
+    // 班级名单独查询 (不依赖外键关联)
+    let class_name = '未分班';
+    if (exam.class_id) {
+      const { data: cls } = await supabase
+        .from('class')
+        .select('class_name')
+        .eq('id', exam.class_id)
+        .maybeSingle();
+      if (cls) class_name = cls.class_name;
+    }
 
     const { data: scs } = await supabase
       .from('score')
@@ -73,10 +83,20 @@ export async function examOverview(req, res, next) {
       for (const s of prevScs || []) prevMap[s.student_id] = Number(s.score);
       const { data: stuList } = await supabase
         .from('student')
-        .select('id, name, class_id, class:class_id(name)')
+        .select('id, name, class_id')
         .in('id', stuIds);
       const sMap = {};
       for (const s of stuList || []) sMap[s.id] = s;
+      // 班级名称映射 (单独查询 class 表)
+      const classIds = [...new Set((stuList || []).map((x) => x.class_id).filter(Boolean))];
+      const classMap = {};
+      if (classIds.length) {
+        const { data: classes } = await supabase
+          .from('class')
+          .select('id, class_name')
+          .in('id', classIds);
+        for (const c of classes || []) classMap[c.id] = c.class_name;
+      }
       for (const r of list) {
         const prev = prevMap[r.student_id];
         let diff = null;
@@ -89,7 +109,7 @@ export async function examOverview(req, res, next) {
         student_progress.push({
           student_id: r.student_id,
           name: r.name,
-          class_name: st?.class?.name || '未分班',
+          class_name: classMap[st?.class_id] || '未分班',
           cur_score: r.score,
           prev_score: prev !== undefined ? prev : null,
           diff,
@@ -130,7 +150,7 @@ export async function examOverview(req, res, next) {
         subject: exam.subject,
         total_score: total,
         exam_time: exam.exam_time,
-        class_name: exam.class?.name || '未分班',
+        class_name,
       },
       stats,
       list,
