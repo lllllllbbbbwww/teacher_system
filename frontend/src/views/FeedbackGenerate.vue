@@ -247,6 +247,7 @@ async function onGenerate() {
     const d = await request.post('/feedback/generate', form);
     result.value = d;
     if (d.cached) ElMessage.info('返回了最近一次生成结果');
+    else if (d.degraded) ElMessage.warning('AI 暂时不可用，已生成基础反馈');
     else ElMessage.success('生成成功');
   } finally {
     generating.value = false;

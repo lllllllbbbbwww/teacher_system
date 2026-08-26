@@ -119,6 +119,31 @@ async function aggregate(req, student_id, time_range, dims) {
   return { student: stu, result };
 }
 
+// AI 不可用时, 基于真实数据生成模板反馈 (降级, 不报 500)
+function fallbackFeedback(student_name, result) {
+  const d = result;
+  const parts = [];
+  if (d.has_score && d.score_summary) parts.push(`成绩：${d.score_summary}`);
+  if (d.has_tag && d.tag_summary) parts.push(`课堂表现：${d.tag_summary}`);
+  if (d.has_attendance && d.attendance_summary) parts.push(`考勤：${d.attendance_summary}`);
+  const base = parts.length ? parts.join('。') : '本周期暂无有效的学情记录';
+
+  let problems = '暂无待改进问题。';
+  if (d.has_attendance && d.attendance_summary && /迟到|旷课|缺勤/.test(d.attendance_summary)) {
+    problems = '近期考勤存在迟到或缺勤情况，需要家校共同关注，帮助孩子养成按时到校的好习惯。';
+  } else if (d.has_tag && d.tag_summary && /待改进/.test(d.tag_summary)) {
+    problems = '课堂表现中仍有待改进之处，建议与孩子沟通具体原因，逐步调整学习状态。';
+  }
+
+  const content_short = `${student_name}同学，${base}。整体表现较为平稳，建议家长与老师保持沟通，共同关注孩子的学习状态。`;
+  const content_full = {
+    advantages: parts.length ? `${base}，值得肯定，希望继续保持。` : '目前暂无明显突出表现数据，建议后续多留意课堂与作业情况。',
+    problems,
+    suggestions: '建议家长在家多关注孩子的学习状态，与老师保持沟通，帮助孩子制定合理的学习计划，并注重劳逸结合。',
+  };
+  return { content_short, content_full };
+}
+
 // 生成 (POST /api/feedback/generate)
 export async function generateFeedback(req, res, next) {
   try {
@@ -174,23 +199,21 @@ export async function generateFeedback(req, res, next) {
       },
     });
 
-    // 调用大模型 (容错重试1次)
-    let parsed;
-    let rawText = '';
+    // 调用大模型 (容错重试1次); 失败时降级为模板反馈, 不报 500
+    let parsed = null;
+    let aiFailed = false;
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        rawText = await callLLM([{ role: 'user', content: prompt }]);
+        const rawText = await callLLM([{ role: 'user', content: prompt }]);
         parsed = parseLLMJson(rawText);
-        break;
+        if (parsed && parsed.short_version && parsed.full_version) break;
+        parsed = null; // 格式异常, 视为失败
       } catch (e) {
-        if (attempt === 1) {
-          return resp.serverError(res, 'AI 生成失败，请稍后重试');
-        }
+        parsed = null;
       }
+      aiFailed = true;
     }
-    if (!parsed || !parsed.short_version || !parsed.full_version) {
-      return resp.serverError(res, 'AI 返回格式异常，未写入数据库');
-    }
+    const fb = parsed || fallbackFeedback(student.name, result);
 
     // 入库 (含数据快照)
     const snapshot = {
@@ -207,8 +230,8 @@ export async function generateFeedback(req, res, next) {
         teacher_notes: teacher_notes || null,
         style_tag,
         focus_points: focus_points || null,
-        content_short: parsed.short_version,
-        content_full: parsed.full_version,
+        content_short: fb.content_short,
+        content_full: fb.content_full,
         source_snapshot: snapshot,
         teacher_id: req.user.id,
       })
@@ -220,11 +243,12 @@ export async function generateFeedback(req, res, next) {
       res,
       {
         id: saved.id,
-        content_short: parsed.short_version,
-        content_full: parsed.full_version,
+        content_short: fb.content_short,
+        content_full: fb.content_full,
         cached: false,
+        degraded: aiFailed,
       },
-      '生成成功'
+      aiFailed ? 'AI 暂时不可用，已生成基础反馈' : '生成成功'
     );
   } catch (e) {
     next(e);
