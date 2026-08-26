@@ -2,11 +2,12 @@ import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import router from '../router';
 
-// 后端 API 地址:
-// - 生产环境: 使用环境变量 VITE_API_BASE, 未设置时回退到已部署的后端地址
+// 后端 API 地址(写死, 不读环境变量, 避免 Vercel 面板变量覆盖导致 404):
+// - 生产环境: 指向已部署的 Render 后端(注意必须带 /api 前缀)
 // - 本地开发: 走 /api (由 vite 代理到 localhost:3000)
+// 如果以后换了后端地址, 只改下面这一行
 const PROD_API = 'https://teacher-backend01.onrender.com/api';
-const API_BASE = import.meta.env.PROD ? (import.meta.env.VITE_API_BASE || PROD_API) : '/api';
+const API_BASE = import.meta.env.PROD ? PROD_API : '/api';
 
 const request = axios.create({
   baseURL: API_BASE,
