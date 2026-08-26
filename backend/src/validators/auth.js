@@ -2,9 +2,9 @@ import Joi from 'joi';
 
 // 注册: 用户名唯一, 密码>=8位且含字母+数字
 export const registerSchema = Joi.object({
-  username: Joi.string().min(3).max(50).required().messages({
+  username: Joi.string().min(3).max(20).required().messages({
     'string.min': '用户名至少3个字符',
-    'string.max': '用户名最多50个字符',
+    'string.max': '用户名最多20个字符',
     'any.required': '用户名必填',
   }),
   password: Joi.string()
@@ -29,9 +29,9 @@ export const loginSchema = Joi.object({
 
 // 管理员创建用户
 export const createUserSchema = Joi.object({
-  username: Joi.string().min(3).max(50).required().messages({
+  username: Joi.string().min(3).max(20).required().messages({
     'string.min': '用户名至少3个字符',
-    'string.max': '用户名最多50个字符',
+    'string.max': '用户名最多20个字符',
     'any.required': '用户名必填',
   }),
   password: Joi.string()

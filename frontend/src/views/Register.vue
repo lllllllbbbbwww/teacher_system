@@ -4,7 +4,7 @@
       <h2>教师注册</h2>
       <el-form :model="form" :rules="rules" ref="formRef" label-width="0">
         <el-form-item prop="username">
-          <el-input v-model="form.username" placeholder="用户名(3-50位)" :prefix-icon="User" size="large" />
+          <el-input v-model="form.username" placeholder="用户名(3-20位)" :prefix-icon="User" size="large" />
         </el-form-item>
         <el-form-item prop="password">
           <el-input v-model="form.password" type="password" show-password placeholder="密码(至少8位,含字母和数字)" :prefix-icon="Lock" size="large" />
@@ -34,7 +34,7 @@ const formRef = ref();
 const loading = ref(false);
 const form = reactive({ username: '', password: '', confirmPassword: '' });
 const rules = {
-  username: [{ required: true, min: 3, max: 50, message: '用户名3-50位', trigger: 'blur' }],
+  username: [{ required: true, min: 3, max: 20, message: '用户名3-20位', trigger: 'blur' }],
   password: [{ required: true, pattern: /^(?=.*[A-Za-z])(?=.*\d).{8,}$/, message: '至少8位,含字母和数字', trigger: 'blur' }],
   confirmPassword: [{ required: true, validator: (r, v, cb) => v === form.password ? cb() : cb(new Error('两次密码不一致')), trigger: 'blur' }],
 };

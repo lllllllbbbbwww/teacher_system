@@ -145,7 +145,7 @@ const formRef = ref();
 const form = reactive({ username: '', password: '', role: 'teacher', display_name: '' });
 
 const rules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  username: [{ required: true, min: 3, max: 20, message: '用户名3-20位', trigger: 'blur' }],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 8, message: '至少8位', trigger: 'blur' },
