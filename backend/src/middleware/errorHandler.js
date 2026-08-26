@@ -25,7 +25,7 @@ export function errorHandler(err, req, res, next) {
 
   // 兜底: 数据库原始错误不直接暴露, 转友好提示
   console.error('[Unhandled]', req.method, req.originalUrl, err);
-  const detail = (err && (err.message || err.name)) || '服务器内部错误';
+  const detail = process.env.NODE_ENV === 'production' ? '服务器内部错误' : (err && err.message) || '服务器内部错误';
   return res.status(500).json({ code: 500, data: null, msg: detail });
 }
 
