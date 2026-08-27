@@ -6,7 +6,7 @@ import router from '../router';
 // - 生产环境: 指向已部署的 Render 后端(注意必须带 /api 前缀)
 // - 本地开发: 走 /api (由 vite 代理到 localhost:3000)
 // 如果以后换了后端地址, 只改下面这一行
-const PROD_API = 'https://teacher-backend01.onrender.com/api';
+const PROD_API = 'https://teacher-backend-303194-11-1462222370.sh.run.tcloudbase.com/api';
 const API_BASE = import.meta.env.PROD ? PROD_API : '/api';
 
 const request = axios.create({

@@ -1,0 +1,6 @@
+{
+  "envId": "teacher-system-d1gxqxshe42e830c5",
+  "cloudrun": {
+    "name": "teacher-backend"
+  }
+}
